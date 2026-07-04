@@ -40,6 +40,7 @@ _alerts_channel = None  # keeps the realtime channel handle alive
 async def on_ready():
     logger.info("Logged in as %s", bot.user)
     asyncio.create_task(_subscribe_alerts())
+    asyncio.create_task(_subscribe_updates())
 
 @bot.event
 async def on_message(message):
@@ -51,6 +52,41 @@ async def on_message(message):
     await bot.process_commands(message)
 async def _subscribe_alerts() -> None:
     global _alerts_channel
+    supabase_url = os.environ["SUPABASE_URL"]
+    # Publishable key (new naming, replaces legacy anon key) is enough here:
+    # this connection only reads broadcast messages, it never writes to Postgres.
+    supabase_key = os.environ["SUPABASE_SECRET_KEY"]
+    supabase: AsyncClient = await acreate_client(supabase_url, supabase_key)
+
+    channel = supabase.channel(
+        "office-alerts",
+        {"config": {"broadcast": {"self": False}, "private": False}},
+    )
+
+    def _make_handler(event_name: str):
+        def _handler(message):
+            data = message.get("payload", message) if isinstance(message, dict) else message
+            print("alert = ", data)
+            asyncio.create_task(_post_alert(event_name, data))
+        return _handler
+
+    channel.on_broadcast("handle_alert_raised", _make_handler("handle_alert_raised"))
+    channel.on_broadcast("handle_alert_cleared", _make_handler("handle_alert_cleared"))
+    statusCh = await channel.subscribe()
+    print("status ch = ", statusCh.state)
+
+    _alerts_channel = channel
+    logger.info("Subscribed to realtime topic 'office-alerts'")
+
+    def _make_handler(event_name: str):
+        def _handler(message):
+            data = message.get("payload", message) if isinstance(message, dict) else message
+            print("data = " + data)
+            asyncio.create_task(_post_alert(event_name, data))
+        return _handler
+
+async def _subscribe_updates() -> None:
+    global _alerts_channel
 
     supabase_url = os.environ["SUPABASE_URL"]
     # Publishable key (new naming, replaces legacy anon key) is enough here:
@@ -59,7 +95,7 @@ async def _subscribe_alerts() -> None:
     supabase: AsyncClient = await acreate_client(supabase_url, supabase_key)
 
     channel = supabase.channel(
-        "office-alerts",
+        "office-updates",
         {"config": {"broadcast": {"self": False}, "private": True}},
     )
 
@@ -69,13 +105,11 @@ async def _subscribe_alerts() -> None:
             asyncio.create_task(_post_alert(event_name, data))
         return _handler
 
-    channel.on_broadcast("alert_raised", _make_handler("alert_raised"))
-    channel.on_broadcast("alert_cleared", _make_handler("alert_cleared"))
+    channel.on_broadcast("device_status_changed", _make_handler("device_status_changed"))
     await channel.subscribe()
 
-    _alerts_channel = channel
-    logger.info("Subscribed to realtime topic 'office-alerts'")
-
+    _updates_channel = channel
+    logger.info("Subscribed to realtime topic 'office-updates'")
 
 async def _post_alert(event_name: str, data: dict) -> None:
     if ALERT_CHANNEL_ID == 0:
