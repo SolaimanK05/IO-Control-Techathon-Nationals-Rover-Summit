@@ -12,7 +12,7 @@ from __future__ import annotations
 import os
 import time
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from supabase import create_client
 
 from state_machine import SimulatedClock, DeviceStore
@@ -20,7 +20,9 @@ from scenarios import DaytimeRandomToggle, ForgottenDeviceScenario, MeetingBurst
 
 
 def main() -> None:
-    load_dotenv()
+    # Walk up from simulator/ to find the root .env automatically.
+    # No local .env copy needed in the simulator folder.
+    load_dotenv(find_dotenv(usecwd=False))
 
     supabase_url = _require_env("SUPABASE_URL")
     supabase_secret_key = _require_env("SUPABASE_SECRET_KEY")

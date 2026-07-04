@@ -1,0 +1,27 @@
+# ============================================================
+# IO Office Monitor — root requirements.txt
+#
+# Single source of truth for all Python dependencies across
+# backend, bot, and simulator. Install once from the repo root:
+#
+#   python -m venv venv
+#   venv\Scripts\pip install -r requirements.txt   (Windows)
+#   venv/bin/pip install -r requirements.txt       (Mac/Linux)
+#
+# Per-service requirements.txt files are redirect stubs that
+# point here — they exist only so editors and tools that
+# expect them in-folder can find them.
+# ============================================================
+
+# --- Shared (backend + bot + simulator all use these) -------
+supabase>=2.9.0
+python-dotenv>=1.0.1
+python-dateutil>=2.9.0
+
+# --- Backend (FastAPI + alert engine) -----------------------
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+
+# --- Bot (Discord) ------------------------------------------
+discord.py>=2.4.0
+httpx>=0.27.0

@@ -13,6 +13,10 @@ import asyncio
 import logging
 import os
 
+from dotenv import find_dotenv, load_dotenv
+
+load_dotenv(find_dotenv(usecwd=False))
+
 import discord
 from discord.ext import commands
 from supabase import AsyncClient, acreate_client
@@ -74,8 +78,8 @@ async def _subscribe_alerts() -> None:
     # to realtime.send() — see handle_alert_raised / handle_alert_cleared in
     # the migrations. Previously these were prefixed with "handle_" which
     # caused a mismatch and silently dropped every alert.
+    # Only subscribe to alert_raised — cleared alerts are silently ignored.
     channel.on_broadcast("alert_raised", _make_handler("alert_raised"))
-    channel.on_broadcast("alert_cleared", _make_handler("alert_cleared"))
     statusCh = await channel.subscribe()
     print("status ch = ", statusCh.state)
 
@@ -119,10 +123,7 @@ async def _post_alert(event_name: str, data: dict) -> None:
         return
 
     msg_text = data.get("message", "an office alert")
-    if event_name == "alert_cleared":
-        text = f"\u2705 Cleared: {msg_text}"
-    else:
-        text = f"\u26a0\ufe0f Alert: {msg_text}"
+    text = f"\u26a0\ufe0f Alert: {msg_text}"
     await discord_channel.send(text)
 
 
