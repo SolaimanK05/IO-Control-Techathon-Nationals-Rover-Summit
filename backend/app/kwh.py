@@ -20,14 +20,19 @@ it operates on whatever device rows and event rows it's handed.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime , timezone
 
 
-def parse_ts(ts) -> datetime:
-    """Accepts either a datetime or an ISO-8601 string (with trailing 'Z')."""
-    if isinstance(ts, datetime):
-        return ts
-    return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+from dateutil.parser import parse as parse_date
+
+def parse_ts(ts: Any) -> datetime:
+    if not ts:
+        return datetime.now(timezone.utc)
+    # dateutil handles 'Z', offsets, and odd microsecond lengths perfectly
+    dt = parse_date(str(ts))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 def compute_kwh_for_day(

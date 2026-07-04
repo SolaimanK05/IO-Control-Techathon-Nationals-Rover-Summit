@@ -41,7 +41,14 @@ async def on_ready():
     logger.info("Logged in as %s", bot.user)
     asyncio.create_task(_subscribe_alerts())
 
+@bot.event
+async def on_message(message):
+    print(f"MESSAGE: {message.author} -> {message.content}")
 
+    if message.author.bot:
+        return
+
+    await bot.process_commands(message)
 async def _subscribe_alerts() -> None:
     global _alerts_channel
 
