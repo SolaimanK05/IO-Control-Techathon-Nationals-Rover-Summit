@@ -1,0 +1,22 @@
+# Environments
+.venv/
+venv/
+env/
+*.env
+!.env.example
+ 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+ 
+# Node (if dashboard exists in this repo)
+node_modules/
+.next/
+ 
+# OS/editor
+.DS_Store
+.vscode/
+ 
