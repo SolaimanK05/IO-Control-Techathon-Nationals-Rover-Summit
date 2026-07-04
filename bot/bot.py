@@ -70,20 +70,17 @@ async def _subscribe_alerts() -> None:
             asyncio.create_task(_post_alert(event_name, data))
         return _handler
 
-    channel.on_broadcast("handle_alert_raised", _make_handler("handle_alert_raised"))
-    channel.on_broadcast("handle_alert_cleared", _make_handler("handle_alert_cleared"))
+    # Event names must match what the Supabase trigger passes as the 2nd arg
+    # to realtime.send() — see handle_alert_raised / handle_alert_cleared in
+    # the migrations. Previously these were prefixed with "handle_" which
+    # caused a mismatch and silently dropped every alert.
+    channel.on_broadcast("alert_raised", _make_handler("alert_raised"))
+    channel.on_broadcast("alert_cleared", _make_handler("alert_cleared"))
     statusCh = await channel.subscribe()
     print("status ch = ", statusCh.state)
 
     _alerts_channel = channel
     logger.info("Subscribed to realtime topic 'office-alerts'")
-
-    def _make_handler(event_name: str):
-        def _handler(message):
-            data = message.get("payload", message) if isinstance(message, dict) else message
-            print("data = " + data)
-            asyncio.create_task(_post_alert(event_name, data))
-        return _handler
 
 async def _subscribe_updates() -> None:
     global _alerts_channel
@@ -121,11 +118,11 @@ async def _post_alert(event_name: str, data: dict) -> None:
         logger.warning("Configured alert channel %s not found/visible", ALERT_CHANNEL_ID)
         return
 
-    message = data.get("message", "an office alert")
+    msg_text = data.get("message", "an office alert")
     if event_name == "alert_cleared":
-        text = f"\u2705 Cleared: {message}"
+        text = f"\u2705 Cleared: {msg_text}"
     else:
-        text = f"\u26a0\ufe0f {message}"
+        text = f"\u26a0\ufe0f Alert: {msg_text}"
     await discord_channel.send(text)
 
 

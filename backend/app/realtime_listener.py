@@ -26,7 +26,7 @@ async def start_listener(supabase):
 
     channel = supabase.channel(
         CHANNEL_NAME,
-        {"config": {"broadcast": {"self": False}, "private": True}},
+        {"config": {"broadcast": {"self": False}, "private": False}},
     )
 
     def _on_event(message):

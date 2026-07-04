@@ -20,8 +20,8 @@ it operates on whatever device rows and event rows it's handed.
 
 from __future__ import annotations
 
-from datetime import datetime , timezone
-
+from datetime import datetime, timezone
+from typing import Any
 
 from dateutil.parser import parse as parse_date
 

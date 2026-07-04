@@ -52,7 +52,7 @@ def main() -> None:
         # Order matters: forgotten_device's 5PM blanket-off should win
         # over an in-progress meeting burst (see scenarios.py docstring
         # for why this is correct per the spec, not a bug).
-        daytime_toggle.tick(clock, store)
+        daytime_toggle.tick(clock, store, exclude_room=meeting_burst.active_room)
         forgotten_device.tick(clock, store)
         meeting_burst.tick(clock, store)
 

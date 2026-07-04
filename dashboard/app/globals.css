@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  /* Base surface — graphite-black, cooler than a generic slate-900 */
+  --color-office-bg: #0b0f14;
+  --color-panel-bg: #12181f;
+  --color-panel-border: #1f2937;
+  --color-panel-border-strong: #2d3846;
+
+  /* Text */
+  --color-ink: #e7edf3;
+  --color-ink-muted: #7c8a99;
+  --color-ink-faint: #4b5563;
+
+  /* Status lamp — teal/cyan reads as an indicator LED, not a "success" green */
+  --color-status-on: #35d0c0;
+  --color-status-off: #3a4552;
+
+  /* Alert lamps — amber (ongoing/warning) and red (critical), same convention
+     as real panel indicator lights */
+  --color-alert-after-hours: #e6a63c;
+  --color-alert-continuous: #e0555f;
+}
+
+body {
+  background-color: var(--color-office-bg);
+  color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------------------
+   Office layout SVG — device visual states.
+   Plain global classes (not CSS Modules) because they're applied via
+   classList on nodes injected by dangerouslySetInnerHTML, not on
+   React-rendered elements — CSS Modules can't target those.
+   ------------------------------------------------------------------- */
+
+.office-svg-wrapper svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.office-svg-wrapper [id*="-light-"] {
+  transition:
+    filter 300ms ease,
+    opacity 300ms ease;
+}
+
+.office-svg-wrapper [id*="-light-"].device-off {
+  filter: grayscale(85%) brightness(0.5);
+  opacity: 0.8;
+}
+
+/* Light glow stays warm — it's a literal light bulb, distinct on purpose
+   from the cyan status-lamp used for badges/indicators elsewhere */
+.office-svg-wrapper [id*="-light-"].device-on {
+  filter: drop-shadow(0 0 8px rgba(255, 200, 120, 0.85)) brightness(1.15);
+  opacity: 1;
+}
+
+.office-svg-wrapper .fan-blades.spinning {
+  animation: fan-spin 0.6s linear infinite;
+}
+
+@keyframes fan-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .office-svg-wrapper .fan-blades.spinning {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Annunciator-panel signature element for AlertsPanel.
+   A small indicator lamp per alert: pulsing for the ongoing/warning
+   tier, solid for the critical tier — mirrors how a real panel
+   distinguishes "still happening" from "needs attention now".
+   ------------------------------------------------------------------- */
+
+.alert-lamp {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.alert-lamp::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  filter: blur(3px);
+}
+
+.alert-lamp.pulsing {
+  animation: lamp-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes lamp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert-lamp.pulsing {
+    animation: none;
+  }
+}
