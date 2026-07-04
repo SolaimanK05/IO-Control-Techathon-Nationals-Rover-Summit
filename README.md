@@ -487,3 +487,9 @@ Remove-Item -Path backend\venv -Recurse -Force
 ```
 
 The shared root `venv/` is now the correct one to use for all services.
+
+```
+
+Made by Blueprint
+
+```
